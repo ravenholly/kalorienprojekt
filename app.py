@@ -2,22 +2,39 @@ import streamlit as st
 import pandas as pd
 import os
 import hashlib
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError
 from datetime import date
 
 # 1. SEITEN-KONFIGURATION
 st.set_page_config(page_title="Dark Calorie Crypt", page_icon="🦇", layout="centered")
 
-# 2. SICHERHEIT: PASSWORT-HASH (raven1994holly)
-RICHTIGER_HASH = "4a5802f31b113686e79485c2954d2507aabf2be89eb8385fa268c867f420dfde"
+# 2. SICHERHEITSKLASSE & HASH
+class PasswordSecurity:
+    def __init__(self):
+        self.ph = PasswordHasher()
+
+    def create_hash(self, password: str) -> str:
+        return self.ph.hash(password)
+
+    def verify_password(self, stored_hash: str, provided_password: str) -> bool:
+        try:
+            return self.ph.verify(stored_hash, provided_password)
+        except (VerifyMismatchError, Exception):
+            return False
+
+# Dein neues Siegel (Argon2 Hash)
+RICHTIGER_HASH = "$argon2id$v=19$m=65536,t=3,p=4$0tEES9HI0I0E4BdphRMZIA$obAzWCMG4UiRvNafxgy1xToF6dzaCVeha3plJKf7Jio"
 
 def check_password():
+    security = PasswordSecurity()
+    
     if "password_correct" not in st.session_state:
         st.markdown("<h2 style='text-align: center; color: #8b0000;'>Wer betritt die Krypta?</h2>", unsafe_allow_html=True)
         pwd_input = st.text_input("Geheimnis", type="password", placeholder="Gib dein Passwort ein...")
         
         if st.button("Eintreten", use_container_width=True):
-            input_hash = hashlib.sha256(pwd_input.encode()).hexdigest()
-            if input_hash == RICHTIGER_HASH:
+            if security.verify_password(RICHTIGER_HASH, pwd_input):
                 st.session_state["password_correct"] = True
                 st.rerun()
             else:
@@ -80,7 +97,6 @@ if check_password():
 
     total_kcal = menge * einzel_kcal
 
-    # --- HIER WAR DIE EINRÜCKUNG (JETZT SAUBER) ---
     if st.button("In der Krypta speichern 💾"):
         if neues_essen and total_kcal > 0:
             neue_zeile = pd.DataFrame({
@@ -99,9 +115,9 @@ if check_password():
     if not df_heute.empty:
         st.table(df_heute[["Lebensmittel", "Kalorien"]])
     else:
-        st.info("Noch keine Seelen gefangen.")
+        st.info("Noch keine Seelen... äh, Kalorien gefangen.")
 
-    # --- FOOTER & ABMELDEN ---
+    # --- FOOTER & KAMERA ---
     with st.expander("📷 Scanner der Finsternis"):
         st.camera_input("Foto aufnehmen", key="kamera")
 
