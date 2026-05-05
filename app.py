@@ -11,7 +11,7 @@ if not os.path.exists(DATEI):
     df.to_csv(DATEI, index=False)
 df = pd.read_csv(DATEI)
 
-# Kamera-Funktion (Funktioniert sofort auf jedem Handy!)
+# Kamera-Funktion
 st.subheader("Barcode oder Essen fotografieren")
 foto = st.camera_input("Kamera starten")
 
@@ -31,5 +31,15 @@ if st.button("Speichern"):
 
 # Liste anzeigen
 st.divider()
+st.subheader("Deine heutige Liste")
 st.dataframe(df, use_container_width=True)
 st.metric("Gesamt heute", f"{df['Kalorien'].sum()} kcal")
+
+# --- NEU: LÖSCH-BUTTON ---
+st.divider()
+if st.button("Alle Daten löschen"):
+    # Erstellt eine komplett leere Datei
+    df_leer = pd.DataFrame(columns=["Lebensmittel", "Kalorien"])
+    df_leer.to_csv(DATEI, index=False)
+    st.warning("Alle Daten wurden entfernt!")
+    st.rerun()
