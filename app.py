@@ -7,7 +7,7 @@ from datetime import date
 # 1. SEITEN-KONFIGURATION
 st.set_page_config(page_title="Dark Calorie Crypt", page_icon="🦇", layout="centered")
 
-# 2. SICHERHEIT: PASSWORT-HASH (Dein Siegel für raven1994holly)
+# 2. SICHERHEIT: PASSWORT-HASH (raven1994holly)
 RICHTIGER_HASH = "4a5802f31b113686e79485c2954d2507aabf2be89eb8385fa268c867f420dfde"
 
 def check_password():
@@ -80,6 +80,7 @@ if check_password():
 
     total_kcal = menge * einzel_kcal
 
+    # --- HIER WAR DIE EINRÜCKUNG (JETZT SAUBER) ---
     if st.button("In der Krypta speichern 💾"):
         if neues_essen and total_kcal > 0:
             neue_zeile = pd.DataFrame({
@@ -98,9 +99,9 @@ if check_password():
     if not df_heute.empty:
         st.table(df_heute[["Lebensmittel", "Kalorien"]])
     else:
-        st.info("Noch keine Seelen... äh, Kalorien gefangen.")
+        st.info("Noch keine Seelen gefangen.")
 
-    # --- FOOTER & KAMERA ---
+    # --- FOOTER & ABMELDEN ---
     with st.expander("📷 Scanner der Finsternis"):
         st.camera_input("Foto aufnehmen", key="kamera")
 
