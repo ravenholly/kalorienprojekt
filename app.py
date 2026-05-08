@@ -234,10 +234,10 @@ if check_password():
                     # Berechnung der Gesamtkalorien für die Anzeige in der Sidebar
                     fav_total = (row['Menge'] / 100 * row['Kalorien_pro_Einheit']) if row['Einheit'] == "Gramm" else (row['Menge'] * row['Kalorien_pro_Einheit'])
                     
-                    # Layout für jeden Favoriten: Name und zwei Buttons (Hinzufügen/Löschen)
+                    # Layout für jeden Favoriten: Name und zwei Buttons
                     st.markdown(f"**{row['Name']}**  \n<small>{row['Menge']}{'g' if row['Einheit'] == 'Gramm' else 'x'} (Gesamt: {round(fav_total, 1)} kcal)</small>", unsafe_allow_html=True)
                     
-                    c1, c2, c3, c_del = st.columns([1, 1, 1, 1])
+                    c_add, c_del = st.columns([0.8, 0.2])
                     
                     def add_entry(cat):
                         kcal_val = (row['Menge'] / 100 * row['Kalorien_pro_Einheit']) if row['Einheit'] == "Gramm" else (row['Menge'] * row['Kalorien_pro_Einheit'])
@@ -253,11 +253,9 @@ if check_password():
                         save_data(full_df, DATEI)
                         st.rerun()
 
-                    if c1.button("F", key=f"f_{index}", help="Zu Frühstück"): add_entry("Frühstück")
-                    if c2.button("M", key=f"m_{index}", help="Zu Mittagessen"): add_entry("Mittagessen")
-                    if c3.button("A", key=f"a_{index}", help="Zu Abendessen"): add_entry("Abendessen")
-                    
-                    if c_del.button("🗑️", key=f"del_{index}"):
+                    if c_add.button(f"Hinzufügen", key=f"add_{index}", use_container_width=True): 
+                        add_entry(st.session_state.aktuelle_kat)
+                    if c_del.button("🗑️", key=f"del_{index}", use_container_width=True):
                         df_predefined = df_predefined.drop(index)
                         save_data(df_predefined, PREDEFINED_DATEI)
                         st.rerun()
