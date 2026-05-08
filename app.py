@@ -216,8 +216,11 @@ if check_password():
         total_kcal = (menge / 100) * einzel_kcal
         eintrag_name = f"{menge}g {neues_essen}"
 
-    if st.button("In der Krypta speichern 💾"):
-        if neues_essen and total_kcal > 0:
+    # Live-Vorschau der berechneten Kalorien
+    st.info(f"⚖️ **Berechnete Opfergabe:** {round(total_kcal, 1)} kcal")
+
+    if st.button("In der Krypta speichern 💾", use_container_width=True):
+        if neues_essen:
             # In Tagesliste speichern
             neue_zeile = pd.DataFrame({
                 "Datum": [heute_str], 
