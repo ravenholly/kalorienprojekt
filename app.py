@@ -99,6 +99,9 @@ def load_data(file_path, columns):
         df.to_csv(file_path, index=False)
     else:
         df = pd.read_csv(file_path)
+        for col in columns:
+            if col not in df.columns:
+                df[col] = "Mittagessen"
     return df
 
 def save_data(df, file_path):
@@ -128,7 +131,7 @@ if check_password():
     PREDEFINED_DATEI = os.path.join(BASE_DIR, "predefined_foods.csv")
 
     # Lade Haupt-Kaloriendaten
-    df = load_data(DATEI, ["Datum", "Lebensmittel", "Kalorien"])
+    df = load_data(DATEI, ["Datum", "Lebensmittel", "Kalorien", "Kategorie"])
     df['Datum'] = df['Datum'].astype(str)
     
     # Lade vordefinierte Lebensmittel
@@ -143,6 +146,16 @@ if check_password():
     # --- SIDEBAR: SCHNELLE AUSWAHL (FAVORITEN) ---
     with st.sidebar:
         st.markdown("<h2 style='color: #8b0000;'>🧛 Vorräte</h2>", unsafe_allow_html=True)
+        
+        if "aktuelle_kat" not in st.session_state or st.session_state.aktuelle_kat not in ["Frühstück", "Mittagessen", "Abendessen"]:
+            st.session_state.aktuelle_kat = "Mittagessen"
+        
+        kat_wahl = st.selectbox("📍 Kategorie für manuelle Eingabe:", 
+                                ["Frühstück", "Mittagessen", "Abendessen"],
+                                index=["Frühstück", "Mittagessen", "Abendessen"].index(st.session_state.aktuelle_kat))
+        st.session_state.aktuelle_kat = kat_wahl
+        st.divider()
+
         if df_predefined.empty:
             st.info("Deine Vorratskammer ist leer. Speichere Lebensmittel im Hauptmenü als Favorit!")
         else:
@@ -154,20 +167,25 @@ if check_password():
                     # Layout für jeden Favoriten: Name und zwei Buttons (Hinzufügen/Löschen)
                     st.markdown(f"**{row['Name']}**  \n<small>{row['Menge']}{'g' if row['Einheit'] == 'Gramm' else 'x'} (Gesamt: {round(fav_total, 1)} kcal)</small>", unsafe_allow_html=True)
                     
-                    c_add, c_del = st.columns(2)
-                    if c_add.button("➕", key=f"add_{index}"):
-                        # Berechnung für den heutigen Eintrag
-                        total_kcal = (row['Menge'] / 100 * row['Kalorien_pro_Einheit']) if row['Einheit'] == "Gramm" else (row['Menge'] * row['Kalorien_pro_Einheit'])
-                        label = f"{row['Menge']}g {row['Name']}" if row['Einheit'] == "Gramm" else f"{row['Menge']}x {row['Name']}"
+                    c1, c2, c3, c_del = st.columns([1, 1, 1, 1])
+                    
+                    def add_entry(cat):
+                        kcal_val = (row['Menge'] / 100 * row['Calorien_pro_Einheit']) if row['Einheit'] == "Gramm" else (row['Menge'] * row['Calorien_pro_Einheit'])
+                        food_lbl = f"{row['Menge']}g {row['Name']}" if row['Einheit'] == "Gramm" else f"{row['Menge']}x {row['Name']}"
                         
-                        neue_zeile = pd.DataFrame({
+                        new_entry = pd.DataFrame({
                             "Datum": [heute_str], 
-                            "Lebensmittel": [label], 
-                            "Kalorien": [round(total_kcal, 1)]
+                            "Lebensmittel": [food_lbl], 
+                            "Kalorien": [round(kcal_val, 1)],
+                            "Kategorie": [cat]
                         })
-                        df = pd.concat([df, neue_zeile], ignore_index=True)
-                        save_data(df, DATEI)
+                        full_df = pd.concat([df, new_entry], ignore_index=True)
+                        save_data(full_df, DATEI)
                         st.rerun()
+
+                    if c1.button("F", key=f"f_{index}", help="Zu Frühstück"): add_entry("Frühstück")
+                    if c2.button("M", key=f"m_{index}", help="Zu Mittagessen"): add_entry("Mittagessen")
+                    if c3.button("A", key=f"a_{index}", help="Zu Abendessen"): add_entry("Abendessen")
                     
                     if c_del.button("🗑️", key=f"del_{index}"):
                         df_predefined = df_predefined.drop(index)
@@ -253,7 +271,8 @@ if check_password():
             neue_zeile = pd.DataFrame({
                 "Datum": [heute_str], 
                 "Lebensmittel": [eintrag_name], 
-                "Kalorien": [final_kcal]
+                "Kalorien": [final_kcal],
+                "Kategorie": [kat_wahl]
             })
             df = pd.concat([df, neue_zeile], ignore_index=True)
             save_data(df, DATEI)
@@ -275,12 +294,16 @@ if check_password():
     st.divider()
     st.subheader("📜 Heutige Chronik")
     if not df_heute.empty:
-        for index, row in df_heute.iterrows():
-            c_info, c_del = st.columns([0.85, 0.15])
-            c_info.write(f"**{row['Lebensmittel']}**: {row['Kalorien']} kcal")
-            if c_del.button("🗑️", key=f"del_entry_{index}"):
-                df = df.drop(index)
-                save_data(df, DATEI)
-                st.rerun()
+        for kat in ["Frühstück", "Mittagessen", "Abendessen"]:
+            kat_entries = df_heute[df_heute["Kategorie"] == kat]
+            if not kat_entries.empty:
+                st.markdown(f"<h5 style='color: #8b0000; border-bottom: 1px solid #333; margin-top: 10px;'>{kat}</h5>", unsafe_allow_html=True)
+                for index, row in kat_entries.iterrows():
+                    c_info, c_del = st.columns([0.85, 0.15])
+                    c_info.write(f"**{row['Lebensmittel']}**: {row['Kalorien']} kcal")
+                    if c_del.button("🗑️", key=f"del_entry_{index}"):
+                        df = df.drop(index)
+                        save_data(df, DATEI)
+                        st.rerun()
     else:
         st.info("Noch keine Seelen... äh, Kalorien gefangen.")
