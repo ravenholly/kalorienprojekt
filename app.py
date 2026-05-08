@@ -51,7 +51,6 @@ def get_product_info(barcode):
     if not barcode:
         return None, None, None
     try:
-        # WICHTIG: Open Food Facts verlangt einen User-Agent Header, um nicht blockiert zu werden
         url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
         headers = {"User-Agent": "DarkCalorieCrypt/1.0 (Windows)"}
         response = requests.get(url, headers=headers, timeout=10)
@@ -63,15 +62,34 @@ def get_product_info(barcode):
                 name = product.get("product_name_de") or product.get("product_name") or "Unbekanntes Opfer"
                 nutriments = product.get("nutriments", {})
                 
-                kcal = nutriments.get("energy-kcal_100g")
-                if kcal is None:
-                    kcal = nutriments.get("energy-kcal_serving")
-                kcal = kcal if kcal is not None else 0
+                kcal = 0.0
+                # 1. Versuch: Kalorien (kcal) direkt finden
+                for key in ["energy-kcal_100g", "energy-kcal_serving", "energy-kcal"]:
+                    val = nutriments.get(key)
+                    if val is not None:
+                        try:
+                            kcal = float(val)
+                            break
+                        except (ValueError, TypeError):
+                            continue
+
+                # 2. Versuch: Wenn kcal immer noch 0.0, nach kJ suchen (1 kcal = 4.184 kJ)
+                if kcal == 0.0:
+                    for key in ["energy-kj_100g", "energy-kj_serving", "energy_100g", "energy_serving"]:
+                        val = nutriments.get(key)
+                        if val is not None:
+                            try:
+                                kcal = float(val) / 4.184
+                                break
+                            except (ValueError, TypeError):
+                                continue
                 
                 image = product.get("image_front_small_url")
                 return name, kcal, image
-    except Exception:
-        pass
+    except requests.exceptions.RequestException:
+        st.error("Verbindung zur Datenbank fehlgeschlagen.")
+    except Exception as e:
+        st.error(f"Fehler: {e}")
     return None, None, None
 
 # --- HILFSFUNKTIONEN ---
@@ -118,7 +136,7 @@ if check_password():
 
     # Session State für Barcode-Suche initialisieren
     if "bc_name" not in st.session_state: st.session_state.bc_name = ""
-    if "bc_kcal" not in st.session_state: st.session_state.bc_kcal = 0
+    if "bc_kcal" not in st.session_state: st.session_state.bc_kcal = 0.0 # Initialisiere als Float
 
     heute_str = str(date.today())
 
@@ -185,6 +203,10 @@ if check_password():
     # Barcode-Suche
     barcode_input = st.text_input("Barcode-Nummer (EAN) eingeben")
     if st.button("Relikt prüfen 🔍"):
+        # Felder immer zuerst leeren, bevor eine neue Suche gestartet wird
+        st.session_state.bc_name = ""
+        st.session_state.bc_kcal = 0.0
+
         if barcode_input:
             with st.spinner("Suche in der Unterwelt..."):
                 name, kcal, image = get_product_info(barcode_input)
@@ -243,8 +265,8 @@ if check_password():
                 save_data(df_predefined, PREDEFINED_DATEI)
                 
             # Felder nach Speichern leeren
-            st.session_state.bc_name = ""
-            st.session_state.bc_kcal = 0
+            st.session_state.bc_name = "" # Leert den Namen
+            st.session_state.bc_kcal = 0.0 # Setzt Kalorien auf 0.0
             
             st.success("Eintrag sicher verwahrt.")
             st.rerun() # Seite neu laden, um Metriken zu aktualisieren
