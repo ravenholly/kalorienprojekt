@@ -407,18 +407,20 @@ if check_password():
     st.subheader("📖 Das Grimoire der Rezepte")
     
     with st.expander("✨ Ein neues Rezept verfassen"):
-        r_name = st.text_input("Name des Rezepts", key="new_recipe_name")
-        r_ing = st.text_area("Zutatenliste", height=150, key="new_recipe_ing", help="Welche Essenzen werden benötigt?")
-        r_content = st.text_area("Zubereitung & Anleitung", height=200, key="new_recipe_content", help="Beschreibe das kulinarische Ritual...")
-        if st.button("Rezept im Grimoire versiegeln"):
-            if r_name and (r_ing or r_content):
-                new_recipe = pd.DataFrame([{"Name": r_name, "Zutaten": r_ing, "Inhalt": r_content}])
-                df_recipes = pd.concat([df_recipes, new_recipe], ignore_index=True)
-                save_data(df_recipes, RECIPES_DATEI)
-                st.success(f"Das Rezept '{r_name}' wurde sicher verwahrt.")
-                st.rerun()
-            else:
-                st.warning("Ein Name und eine Anleitung sind für die Beschwörung nötig.")
+        with st.form("new_recipe_form", clear_on_submit=True):
+            r_name = st.text_input("Name des Rezepts")
+            r_ing = st.text_area("Zutatenliste", height=150, help="Welche Essenzen werden benötigt?")
+            r_content = st.text_area("Zubereitung & Anleitung", height=200, help="Beschreibe das kulinarische Ritual...")
+            
+            if st.form_submit_button("Rezept im Grimoire versiegeln", use_container_width=True):
+                if r_name and (r_ing or r_content):
+                    new_recipe = pd.DataFrame([{"Name": r_name, "Zutaten": r_ing, "Inhalt": r_content}])
+                    df_recipes = pd.concat([df_recipes, new_recipe], ignore_index=True)
+                    save_data(df_recipes, RECIPES_DATEI)
+                    st.success(f"Das Rezept '{r_name}' wurde sicher verwahrt.")
+                    st.rerun()
+                else:
+                    st.warning("Ein Name und eine Anleitung sind für die Beschwörung nötig.")
 
     if not df_recipes.empty:
         for r_idx, r_row in df_recipes.iterrows():
