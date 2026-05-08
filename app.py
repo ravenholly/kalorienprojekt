@@ -130,8 +130,11 @@ if check_password():
         else:
             for index, row in df_predefined.iterrows():
                 with st.container():
+                    # Berechnung der Gesamtkalorien für die Anzeige in der Sidebar
+                    fav_total = (row['Menge'] / 100 * row['Kalorien_pro_Einheit']) if row['Einheit'] == "Gramm" else (row['Menge'] * row['Kalorien_pro_Einheit'])
+                    
                     # Layout für jeden Favoriten: Name und zwei Buttons (Hinzufügen/Löschen)
-                    st.markdown(f"**{row['Name']}**  \n<small>{row['Menge']}{'g' if row['Einheit'] == 'Gramm' else 'x'} ({row['Kalorien_pro_Einheit']} kcal)</small>", unsafe_allow_html=True)
+                    st.markdown(f"**{row['Name']}**  \n<small>{row['Menge']}{'g' if row['Einheit'] == 'Gramm' else 'x'} (Gesamt: {round(fav_total, 1)} kcal)</small>", unsafe_allow_html=True)
                     
                     c_add, c_del = st.columns(2)
                     if c_add.button("➕", key=f"add_{index}"):
@@ -205,7 +208,7 @@ if check_password():
         menge = st.number_input(menge_label, min_value=1, value=1 if einheit == "Stück" else 100, step=1)
     with col2:
         kcal_label = "Kalorien pro Stück" if einheit == "Stück" else "Kalorien pro 100g"
-        einzel_kcal = st.number_input(kcal_label, min_value=0, value=int(st.session_state.bc_kcal), step=1)
+        einzel_kcal = st.number_input(kcal_label, min_value=0.0, value=float(st.session_state.bc_kcal), step=0.1, format="%.1f")
 
     als_favorit = st.checkbox("Dauerhaft in Vorräte (Sidebar) aufnehmen?")
 
@@ -216,8 +219,11 @@ if check_password():
         total_kcal = (menge / 100) * einzel_kcal
         eintrag_name = f"{menge}g {neues_essen}"
 
+    # Wir runden auf eine Nachkommastelle für die Chronik
+    final_kcal = round(total_kcal, 1)
+
     # Live-Vorschau der berechneten Kalorien
-    st.info(f"⚖️ **Berechnete Opfergabe:** {round(total_kcal, 1)} kcal")
+    st.info(f"⚖️ **Berechnete Opfergabe:** {final_kcal} kcal")
 
     if st.button("In der Krypta speichern 💾", use_container_width=True):
         if neues_essen:
@@ -225,7 +231,7 @@ if check_password():
             neue_zeile = pd.DataFrame({
                 "Datum": [heute_str], 
                 "Lebensmittel": [eintrag_name], 
-                "Kalorien": [round(total_kcal, 1)]
+                "Kalorien": [final_kcal]
             })
             df = pd.concat([df, neue_zeile], ignore_index=True)
             save_data(df, DATEI)
