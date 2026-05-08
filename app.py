@@ -209,8 +209,8 @@ if check_password():
 
     c1, c2, c3 = st.columns(3)
     c1.metric("Limit", f"{TAGESZIEL}")
-    c2.metric("Opfer", f"{gegessen}")
-    c3.metric("Rest", f"{uebrig}")
+    c2.metric("Opfer", f"{round(gegessen, 1)}")
+    c3.metric("Rest", f"{round(uebrig, 1)}")
 
     st.progress(min(gegessen / TAGESZIEL, 1.0))
     st.divider()
@@ -300,7 +300,7 @@ if check_password():
                 st.markdown(f"<h5 style='color: #8b0000; border-bottom: 1px solid #333; margin-top: 10px;'>{kat}</h5>", unsafe_allow_html=True)
                 for index, row in kat_entries.iterrows():
                     c_info, c_del = st.columns([0.85, 0.15])
-                    c_info.write(f"**{row['Lebensmittel']}**: {row['Kalorien']} kcal")
+                    c_info.write(f"**{row['Lebensmittel']}**: {round(row['Kalorien'], 1)} kcal")
                     if c_del.button("🗑️", key=f"del_entry_{index}"):
                         df = df.drop(index)
                         save_data(df, DATEI)
