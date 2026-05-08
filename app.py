@@ -43,6 +43,20 @@ def check_password():
     return True
 
 # 3. HAUPTPROGRAMM (Nur nach Login sichtbar)
+
+# --- HILFSFUNKTIONEN ---
+def load_data(file_path, columns):
+    if not os.path.exists(file_path):
+        df = pd.DataFrame(columns=columns)
+        df.to_csv(file_path, index=False)
+    else:
+        df = pd.read_csv(file_path)
+    return df
+
+def save_data(df, file_path):
+    df.to_csv(file_path, index=False)
+
+
 if check_password():
     
     # --- GOTHIC DESIGN (CSS) ---
@@ -54,21 +68,63 @@ if check_password():
         .stButton>button:hover { background-color: #8b0000; color: white; border: 1px solid #ff0000; }
         input { background-color: #1a1a1a !important; color: #e0e0e0 !important; border: 1px solid #333 !important; }
         .stProgress > div > div > div > div { background-color: #8b0000; }
+        [data-testid="stSidebar"] { background-color: #111; border-right: 1px solid #8b0000; }
         </style>
         """, unsafe_allow_html=True)
 
     # --- EINSTELLUNGEN & DATEN ---
     TAGESZIEL = 1550
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    DATEI = os.path.join(BASE_DIR, "kalorien_daten.csv")
-
-    if not os.path.exists(DATEI):
-        df = pd.DataFrame(columns=["Datum", "Lebensmittel", "Kalorien"])
-        df.to_csv(DATEI, index=False)
     
-    df = pd.read_csv(DATEI)
+    DATEI = os.path.join(BASE_DIR, "kalorien_daten.csv")
+    PREDEFINED_DATEI = os.path.join(BASE_DIR, "predefined_foods.csv")
+
+    # Lade Haupt-Kaloriendaten
+    df = load_data(DATEI, ["Datum", "Lebensmittel", "Kalorien"])
     df['Datum'] = df['Datum'].astype(str)
+    
+    # Lade vordefinierte Lebensmittel
+    df_predefined = load_data(PREDEFINED_DATEI, ["Name", "Menge", "Einheit", "Kalorien_pro_Einheit"])
+
     heute_str = str(date.today())
+
+    # --- SIDEBAR: SCHNELLE AUSWAHL (FAVORITEN) ---
+    with st.sidebar:
+        st.markdown("<h2 style='color: #8b0000;'>🧛 Vorräte</h2>", unsafe_allow_html=True)
+        if df_predefined.empty:
+            st.info("Deine Vorratskammer ist leer. Speichere Lebensmittel im Hauptmenü als Favorit!")
+        else:
+            for index, row in df_predefined.iterrows():
+                with st.container():
+                    # Layout für jeden Favoriten: Name und zwei Buttons (Hinzufügen/Löschen)
+                    st.markdown(f"**{row['Name']}**  \n<small>{row['Menge']}{'g' if row['Einheit'] == 'Gramm' else 'x'} ({row['Kalorien_pro_Einheit']} kcal)</small>", unsafe_allow_html=True)
+                    
+                    c_add, c_del = st.columns(2)
+                    if c_add.button("➕", key=f"add_{index}"):
+                        # Berechnung für den heutigen Eintrag
+                        total_kcal = (row['Menge'] / 100 * row['Kalorien_pro_Einheit']) if row['Einheit'] == "Gramm" else (row['Menge'] * row['Kalorien_pro_Einheit'])
+                        label = f"{row['Menge']}g {row['Name']}" if row['Einheit'] == "Gramm" else f"{row['Menge']}x {row['Name']}"
+                        
+                        neue_zeile = pd.DataFrame({
+                            "Datum": [heute_str], 
+                            "Lebensmittel": [label], 
+                            "Kalorien": [round(total_kcal, 1)]
+                        })
+                        df = pd.concat([df, neue_zeile], ignore_index=True)
+                        save_data(df, DATEI)
+                        st.rerun()
+                    
+                    if c_del.button("🗑️", key=f"del_{index}"):
+                        df_predefined = df_predefined.drop(index)
+                        save_data(df_predefined, PREDEFINED_DATEI)
+                        st.rerun()
+                st.divider()
+
+        st.write("")
+        if st.button("Abmelden"):
+            del st.session_state["password_correct"]
+            st.rerun()
+
 
     # --- HEADER ---
     st.markdown("<h1 style='text-align: center; color: #8b0000;'>🦇 Dark Calorie Crypt 🦇</h1>", unsafe_allow_html=True)
@@ -100,6 +156,8 @@ if check_password():
         kcal_label = "Kalorien pro Stück" if einheit == "Stück" else "Kalorien pro 100g"
         einzel_kcal = st.number_input(kcal_label, min_value=0, value=0, step=1)
 
+    als_favorit = st.checkbox("Dauerhaft in Vorräte (Sidebar) aufnehmen?")
+
     if einheit == "Stück":
         total_kcal = menge * einzel_kcal
         eintrag_name = f"{menge}x {neues_essen}"
@@ -109,13 +167,21 @@ if check_password():
 
     if st.button("In der Krypta speichern 💾"):
         if neues_essen and total_kcal > 0:
+            # In Tagesliste speichern
             neue_zeile = pd.DataFrame({
                 "Datum": [heute_str], 
                 "Lebensmittel": [eintrag_name], 
                 "Kalorien": [round(total_kcal, 1)]
             })
             df = pd.concat([df, neue_zeile], ignore_index=True)
-            df.to_csv(DATEI, index=False)
+            save_data(df, DATEI)
+            
+            # Optional: In Favoriten (Sidebar) speichern
+            if als_favorit:
+                neu_fav = pd.DataFrame([{"Name": neues_essen, "Menge": menge, "Einheit": einheit, "Kalorien_pro_Einheit": einzel_kcal}])
+                df_predefined = pd.concat([df_predefined, neu_fav], ignore_index=True)
+                save_data(df_predefined, PREDEFINED_DATEI)
+                
             st.success("Eintrag sicher verwahrt.")
             st.rerun() # Seite neu laden, um Metriken zu aktualisieren
 
@@ -123,15 +189,16 @@ if check_password():
     st.divider()
     st.subheader("📜 Heutige Chronik")
     if not df_heute.empty:
-        st.table(df_heute[["Lebensmittel", "Kalorien"]])
+        for index, row in df_heute.iterrows():
+            c_info, c_del = st.columns([0.85, 0.15])
+            c_info.write(f"**{row['Lebensmittel']}**: {row['Kalorien']} kcal")
+            if c_del.button("🗑️", key=f"del_entry_{index}"):
+                df = df.drop(index)
+                save_data(df, DATEI)
+                st.rerun()
     else:
         st.info("Noch keine Seelen... äh, Kalorien gefangen.")
 
     # --- FOOTER & KAMERA ---
     with st.expander("📷 Scanner der Finsternis"):
         st.camera_input("Foto aufnehmen", key="kamera")
-
-    st.write("")
-    if st.button("Abmelden / Krypta verlassen"):
-        del st.session_state["password_correct"]
-        st.rerun()
