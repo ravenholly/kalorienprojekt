@@ -8,7 +8,7 @@ from argon2.exceptions import VerifyMismatchError
 from datetime import date
 
 # 1. SEITEN-KONFIGURATION
-st.set_page_config(page_title="Dark Calorie Crypt", page_icon="🦇", layout="centered")
+st.set_page_config(page_title="Dark Calorie Crypt", page_icon="🐦‍⬛", layout="centered")
 
 # 2. SICHERHEITSKLASSE & HASH
 class PasswordSecurity:
@@ -113,13 +113,83 @@ if check_password():
     # --- GOTHIC DESIGN (CSS) ---
     st.markdown("""
         <style>
-        .stApp { background-color: #0a0a0a; color: #b3b3b3; font-family: 'Georgia', serif; }
-        [data-testid="stMetricValue"] { color: #8b0000 !important; font-size: 2rem !important; }
-        .stButton>button { width: 100%; border-radius: 5px; background-color: #4a0404; color: #e0e0e0; border: 1px solid #8b0000; }
-        .stButton>button:hover { background-color: #8b0000; color: white; border: 1px solid #ff0000; }
-        input { background-color: #1a1a1a !important; color: #e0e0e0 !important; border: 1px solid #333 !important; }
-        .stProgress > div > div > div > div { background-color: #8b0000; }
-        [data-testid="stSidebar"] { background-color: #111; border-right: 1px solid #8b0000; }
+        @import url('https://fonts.googleapis.com/css2?family=Almendra:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+        /* Shimmer Animation */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        /* Haupt-Hintergrund mit radialem Verlauf */
+        .stApp { 
+            background: radial-gradient(circle at center, #2a0515 0%, #0a0505 50%, #000000 100%); 
+            color: #d3d3d3; 
+            font-family: 'Almendra', serif; 
+        }
+
+        /* Überschriften */
+        h1, h2, h3, h5 { 
+            font-family: 'Almendra', serif; 
+            color: #d4af37; /* Gold */
+            text-shadow: 2px 2px 10px rgba(255, 0, 127, 0.5); /* Rosa Glow */
+        }
+
+        /* Metriken (Glow-Effekt) */
+        div[data-testid="stMetric"] {
+            background: rgba(30, 0, 15, 0.4);
+            border: 1px solid #d4af37;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.2), inset 0 0 10px rgba(255, 0, 127, 0.1);
+        }
+        [data-testid="stMetricValue"] { 
+            color: #d4af37 !important; 
+            font-size: 2.5rem !important; 
+            text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+        }
+
+        /* Buttons mit Hover-Effekt */
+        .stButton>button { 
+            width: 100%; 
+            border-radius: 0px; 
+            background: linear-gradient(90deg, #300000, #4a0404, #300000);
+            background-size: 200% 100%;
+            color: #ffd700; 
+            border: 1px solid #d4af37;
+            transition: all 0.4s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .stButton>button:hover { 
+            animation: shimmer 2s infinite linear;
+            background-image: linear-gradient(90deg, #4a0404, #7a0a0a, #5a3a0a, #4a0404); /* Subtilerer Shimmer */
+            color: #fffacd; /* Hellere Goldfarbe */
+            box-shadow: 0 0 15px rgba(255, 0, 127, 0.4); /* Dezenterer Schatten */
+            transform: translateY(-2px);
+            border-color: #d4af37; /* Goldener Rand */
+        }
+
+        /* Inputs & Sidebar */
+        input { 
+            background-color: #000 !important; 
+            color: #ff007f !important; 
+            border: 1px solid #d4af37 !important; 
+        }
+        .stProgress > div > div > div > div { 
+            background: linear-gradient(90deg, #8b0000, #ff007f, #d4af37); 
+            box-shadow: 0 0 15px #ff007f; 
+        }
+        [data-testid="stSidebar"] { 
+            background-color: #0a0005; 
+            border-right: 2px solid #d4af37; 
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #050505; }
+        ::-webkit-scrollbar-thumb { background: #4a0404; border-radius: 0px; }
+        ::-webkit-scrollbar-thumb:hover { background: #8b0000; }
         </style>
         """, unsafe_allow_html=True)
 
@@ -200,7 +270,7 @@ if check_password():
 
 
     # --- HEADER ---
-    st.markdown("<h1 style='text-align: center; color: #8b0000;'>🦇 Dark Calorie Crypt 🦇</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; color: #8b0000;'>🐦‍⬛ Dark Calorie Crypt <span style='display:inline-block; transform: scaleX(-1);'>🐦‍⬛</span></h1>", unsafe_allow_html=True)
 
     # --- DASHBOARD ---
     df_heute = df[df["Datum"] == heute_str]
