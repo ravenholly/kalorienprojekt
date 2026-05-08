@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import os
 import hashlib
+import requests
 from argon2 import PasswordHasher
 from argon2.exceptions import VerifyMismatchError
 from datetime import date
@@ -44,6 +45,35 @@ def check_password():
 
 # 3. HAUPTPROGRAMM (Nur nach Login sichtbar)
 
+def get_product_info(barcode):
+    """Holt Produktdaten von Open Food Facts."""
+    barcode = str(barcode).strip()
+    if not barcode:
+        return None, None, None
+    try:
+        # WICHTIG: Open Food Facts verlangt einen User-Agent Header, um nicht blockiert zu werden
+        url = f"https://world.openfoodfacts.org/api/v2/product/{barcode}.json"
+        headers = {"User-Agent": "DarkCalorieCrypt/1.0 (Windows)"}
+        response = requests.get(url, headers=headers, timeout=10)
+
+        if response.status_code == 200:
+            data = response.json()
+            if data.get("status") == 1:
+                product = data.get("product", {})
+                name = product.get("product_name_de") or product.get("product_name") or "Unbekanntes Opfer"
+                nutriments = product.get("nutriments", {})
+                
+                kcal = nutriments.get("energy-kcal_100g")
+                if kcal is None:
+                    kcal = nutriments.get("energy-kcal_serving")
+                kcal = kcal if kcal is not None else 0
+                
+                image = product.get("image_front_small_url")
+                return name, kcal, image
+    except Exception:
+        pass
+    return None, None, None
+
 # --- HILFSFUNKTIONEN ---
 def load_data(file_path, columns):
     if not os.path.exists(file_path):
@@ -85,6 +115,10 @@ if check_password():
     
     # Lade vordefinierte Lebensmittel
     df_predefined = load_data(PREDEFINED_DATEI, ["Name", "Menge", "Einheit", "Kalorien_pro_Einheit"])
+
+    # Session State für Barcode-Suche initialisieren
+    if "bc_name" not in st.session_state: st.session_state.bc_name = ""
+    if "bc_kcal" not in st.session_state: st.session_state.bc_kcal = 0
 
     heute_str = str(date.today())
 
@@ -143,8 +177,25 @@ if check_password():
     st.divider()
 
     # --- EINGABE ---
-    st.subheader("🌑 Neues Opfer eintragen")
-    neues_essen = st.text_input("Name der Speise")
+    st.subheader("🌑 Neues Opfer rufen")
+    
+    # Barcode-Suche
+    barcode_input = st.text_input("Barcode-Nummer (EAN) eingeben")
+    if st.button("Relikt prüfen 🔍"):
+        if barcode_input:
+            with st.spinner("Suche in der Unterwelt..."):
+                name, kcal, image = get_product_info(barcode_input)
+                if name:
+                    st.session_state.bc_name = name
+                    st.session_state.bc_kcal = kcal
+                    if image:
+                        st.image(image, width=100)
+                    st.success(f"Gefunden: {name}")
+                else:
+                    st.error("Dieses Relikt ist unbekannt.")
+
+    st.divider()
+    neues_essen = st.text_input("Name der Speise", value=st.session_state.bc_name)
     
     einheit = st.radio("Einheit wählen", ["Stück", "Gramm"], horizontal=True)
 
@@ -154,7 +205,7 @@ if check_password():
         menge = st.number_input(menge_label, min_value=1, value=1 if einheit == "Stück" else 100, step=1)
     with col2:
         kcal_label = "Kalorien pro Stück" if einheit == "Stück" else "Kalorien pro 100g"
-        einzel_kcal = st.number_input(kcal_label, min_value=0, value=0, step=1)
+        einzel_kcal = st.number_input(kcal_label, min_value=0, value=int(st.session_state.bc_kcal), step=1)
 
     als_favorit = st.checkbox("Dauerhaft in Vorräte (Sidebar) aufnehmen?")
 
@@ -182,6 +233,10 @@ if check_password():
                 df_predefined = pd.concat([df_predefined, neu_fav], ignore_index=True)
                 save_data(df_predefined, PREDEFINED_DATEI)
                 
+            # Felder nach Speichern leeren
+            st.session_state.bc_name = ""
+            st.session_state.bc_kcal = 0
+            
             st.success("Eintrag sicher verwahrt.")
             st.rerun() # Seite neu laden, um Metriken zu aktualisieren
 
@@ -198,7 +253,3 @@ if check_password():
                 st.rerun()
     else:
         st.info("Noch keine Seelen... äh, Kalorien gefangen.")
-
-    # --- FOOTER & KAMERA ---
-    with st.expander("📷 Scanner der Finsternis"):
-        st.camera_input("Foto aufnehmen", key="kamera")

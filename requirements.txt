@@ -1,3 +1,4 @@
 streamlit
 pandas
 argon2-cffi
+requests
