@@ -1,4 +1,4 @@
-Name,Inhalt,Zutaten
+Name,Inhalt,Zutaten,Kcal_Gesamt,Kcal_Pro_Person
 Low-Carb Big Mac Rolle,"Magerquark, Eier  zu einer dickflüssigen Masse verrühren und auf einem mit Backpapier ausgelegten Backblech verteilen.
 Bei 180 °C Ober-/Unterhitze im heißen Backofen ca. 30 Minuten backen.
 Den Teig auskühlen lassen.
@@ -28,7 +28,7 @@ Salz und Pferffer
 3 Scheiben Schmelzkäse
 3 Gewürzgurken
 Salat
-Tomaten"
+Tomaten",900.0,450.0
 Guacamole,"Zwiebel fein würfeln.
 Tomate in  Viertel schneiden und das Kerngehäuse herausnehmen , dann in Streifen und anschließend in Würfel schneiden.
 Tomate in seperate Schüssel und in den Kühlschrank.
@@ -49,4 +49,4 @@ Kurz vor dem essen, Tomaten hinzu, Kern raus und vermischen.
 0,5 Zwiebel
 0,5 Zitrone
 Salz & Pfeffer guten Schwung
-"
+",0.0,0.0

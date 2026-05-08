@@ -231,11 +231,14 @@ if check_password():
     df_predefined = load_data(PREDEFINED_DATEI, ["Name", "Menge", "Einheit", "Kalorien_pro_Einheit"])
 
     # Lade Rezepte
-    df_recipes = load_data(RECIPES_DATEI, ["Name", "Zutaten", "Inhalt"])
+    df_recipes = load_data(RECIPES_DATEI, ["Name", "Zutaten", "Inhalt", "Kcal_Gesamt", "Kcal_Pro_Person"])
+    df_recipes["Kcal_Gesamt"] = pd.to_numeric(df_recipes["Kcal_Gesamt"], errors='coerce').fillna(0.0)
+    df_recipes["Kcal_Pro_Person"] = pd.to_numeric(df_recipes["Kcal_Pro_Person"], errors='coerce').fillna(0.0)
 
     # Session State für Barcode-Suche initialisieren
     if "bc_name" not in st.session_state: st.session_state.bc_name = ""
     if "bc_kcal" not in st.session_state: st.session_state.bc_kcal = 0.0 # Initialisiere als Float
+    if "edit_recipe_idx" not in st.session_state: st.session_state.edit_recipe_idx = None
 
     heute_str = str(date.today())
 
@@ -412,9 +415,13 @@ if check_password():
             r_ing = st.text_area("Zutatenliste", height=150, help="Welche Essenzen werden benötigt?")
             r_content = st.text_area("Zubereitung & Anleitung", height=200, help="Beschreibe das kulinarische Ritual...")
             
+            col_k1, col_k2 = st.columns(2)
+            r_kcal_total = col_k1.number_input("Kalorien gesamt", min_value=0.0, step=1.0)
+            r_kcal_person = col_k2.number_input("Kalorien pro Person", min_value=0.0, step=1.0)
+
             if st.form_submit_button("Rezept im Grimoire versiegeln", use_container_width=True):
                 if r_name and (r_ing or r_content):
-                    new_recipe = pd.DataFrame([{"Name": r_name, "Zutaten": r_ing, "Inhalt": r_content}])
+                    new_recipe = pd.DataFrame([{"Name": r_name, "Zutaten": r_ing, "Inhalt": r_content, "Kcal_Gesamt": r_kcal_total, "Kcal_Pro_Person": r_kcal_person}])
                     df_recipes = pd.concat([df_recipes, new_recipe], ignore_index=True)
                     save_data(df_recipes, RECIPES_DATEI)
                     st.success(f"Das Rezept '{r_name}' wurde sicher verwahrt.")
@@ -425,43 +432,56 @@ if check_password():
     if not df_recipes.empty:
         for r_idx, r_row in df_recipes.iterrows():
             with st.expander(f"📜 {r_row['Name']}"):
-                # Anzeige der getrennten Bereiche
-                if r_row['Zutaten']:
-                    st.markdown("### 🧪 Benötigte Essenzen")
-                    st.markdown(r_row['Zutaten'].replace("\n", "  \n"))
-                
-                if r_row['Inhalt']:
-                    st.markdown("### 📖 Das Ritual")
-                st.markdown(r_row['Inhalt'].replace("\n", "  \n"))
-                
-                st.divider()
-                
-                # Integrierter Bereich für neue Zutaten PRO REZEPT
-                with st.container():
-                    st.markdown("<small><i>Zutat aus diesem Rezept den Vorräten hinzufügen:</i></small>", unsafe_allow_html=True)
-                    ic1, ic2 = st.columns(2)
-                    with ic1:
-                        z_name = st.text_input("Name", key=f"ing_n_{r_idx}")
-                        z_einheit = st.radio("Einheit", ["Stück", "Gramm"], key=f"ing_u_{r_idx}", horizontal=True)
-                    with ic2:
-                        z_label = "kcal/Stück" if z_einheit == "Stück" else "kcal/100g"
-                        z_kcal = st.number_input(z_label, min_value=0.0, step=0.1, key=f"ing_k_{r_idx}")
-                    
-                    if st.button("In Vorräte schmieden", key=f"btn_add_{r_idx}"):
-                        if z_name:
-                            z_menge = 1.0 if z_einheit == "Stück" else 100.0
-                            neu_fav = pd.DataFrame([{
-                                "Name": z_name, 
-                                "Menge": z_menge, 
-                                "Einheit": z_einheit, 
-                                "Kalorien_pro_Einheit": z_kcal
-                            }])
-                            df_predefined = pd.concat([df_predefined, neu_fav], ignore_index=True)
-                            save_data(df_predefined, PREDEFINED_DATEI)
-                            st.success(f"'{z_name}' hinzugefügt!")
+                if st.session_state.edit_recipe_idx == r_idx:
+                    # --- BEARBEITUNGSMODUS ---
+                    with st.form(f"edit_form_{r_idx}"):
+                        e_name = st.text_input("Name", value=r_row['Name'])
+                        e_ing = st.text_area("Zutaten", value=r_row['Zutaten'], height=150)
+                        e_content = st.text_area("Anleitung", value=r_row['Inhalt'], height=200)
+                        
+                        ec1, ec2 = st.columns(2)
+                        # Sicherstellen, dass Werte numerisch sind für das Eingabefeld
+                        def_total = float(r_row['Kcal_Gesamt'])
+                        def_pers = float(r_row['Kcal_Pro_Person'])
+                        
+                        e_kcal_total = ec1.number_input("Kalorien gesamt", value=def_total, step=1.0)
+                        e_kcal_person = ec2.number_input("Kalorien pro Person", value=def_pers, step=1.0)
+                        
+                        c_save, c_cancel = st.columns(2)
+                        if c_save.form_submit_button("Änderungen versiegeln", use_container_width=True):
+                            df_recipes.at[r_idx, 'Name'] = e_name
+                            df_recipes.at[r_idx, 'Zutaten'] = e_ing
+                            df_recipes.at[r_idx, 'Inhalt'] = e_content
+                            df_recipes.at[r_idx, 'Kcal_Gesamt'] = e_kcal_total
+                            df_recipes.at[r_idx, 'Kcal_Pro_Person'] = e_kcal_person
+                            save_data(df_recipes, RECIPES_DATEI)
+                            st.session_state.edit_recipe_idx = None
                             st.rerun()
+                        if c_cancel.form_submit_button("Abbrechen", use_container_width=True):
+                            st.session_state.edit_recipe_idx = None
+                            st.rerun()
+                else:
+                    # --- ANZEIGEMODUS ---
+                    if r_row['Kcal_Gesamt'] or r_row['Kcal_Pro_Person']:
+                        m1, m2 = st.columns(2)
+                        m1.info(f"🔥 Gesamt: **{r_row['Kcal_Gesamt']}** kcal")
+                        m2.info(f"👤 Pro Person: **{r_row['Kcal_Pro_Person']}** kcal")
 
-                if st.button("Dieses Rezept vernichten", key=f"del_recipe_{r_idx}"):
-                    df_recipes = df_recipes.drop(r_idx).reset_index(drop=True)
-                    save_data(df_recipes, RECIPES_DATEI)
-                    st.rerun()
+                    if r_row['Zutaten']:
+                        st.markdown("### 🧪 Benötigte Essenzen")
+                        st.markdown(r_row['Zutaten'].replace("\n", "  \n"))
+                    
+                    if r_row['Inhalt']:
+                        st.markdown("### 📖 Das Ritual")
+                        st.markdown(r_row['Inhalt'].replace("\n", "  \n"))
+                    
+                    st.divider()
+                    
+                    cb1, cb2 = st.columns(2)
+                    if cb1.button("✏️ Rezept überarbeiten", key=f"edit_btn_{r_idx}", use_container_width=True):
+                        st.session_state.edit_recipe_idx = r_idx
+                        st.rerun()
+                    if cb2.button("🗑️ Rezept vernichten", key=f"del_recipe_{r_idx}", use_container_width=True):
+                        df_recipes = df_recipes.drop(r_idx).reset_index(drop=True)
+                        save_data(df_recipes, RECIPES_DATEI)
+                        st.rerun()
