@@ -101,7 +101,7 @@ def load_data(file_path, columns):
         df = pd.read_csv(file_path)
         for col in columns:
             if col not in df.columns:
-                df[col] = "Mittagessen"
+                df[col] = ""
     return df
 
 def save_data(df, file_path):
@@ -221,6 +221,7 @@ if check_password():
     
     DATEI = os.path.join(BASE_DIR, "kalorien_daten.csv")
     PREDEFINED_DATEI = os.path.join(BASE_DIR, "predefined_foods.csv")
+    RECIPES_DATEI = os.path.join(BASE_DIR, "recipes.csv")
 
     # Lade Haupt-Kaloriendaten
     df = load_data(DATEI, ["Datum", "Lebensmittel", "Kalorien", "Kategorie"])
@@ -228,6 +229,9 @@ if check_password():
     
     # Lade vordefinierte Lebensmittel
     df_predefined = load_data(PREDEFINED_DATEI, ["Name", "Menge", "Einheit", "Kalorien_pro_Einheit"])
+
+    # Lade Rezepte
+    df_recipes = load_data(RECIPES_DATEI, ["Name", "Zutaten", "Inhalt"])
 
     # Session State für Barcode-Suche initialisieren
     if "bc_name" not in st.session_state: st.session_state.bc_name = ""
@@ -397,3 +401,65 @@ if check_password():
                         st.rerun()
     else:
         st.info("Noch keine Seelen... äh, Kalorien gefangen.")
+
+    # --- REZEPTE (GRIMOIRE) ---
+    st.divider()
+    st.subheader("📖 Das Grimoire der Rezepte")
+    
+    with st.expander("✨ Ein neues Rezept verfassen"):
+        r_name = st.text_input("Name des Rezepts", key="new_recipe_name")
+        r_ing = st.text_area("Zutatenliste", height=150, key="new_recipe_ing", help="Welche Essenzen werden benötigt?")
+        r_content = st.text_area("Zubereitung & Anleitung", height=200, key="new_recipe_content", help="Beschreibe das kulinarische Ritual...")
+        if st.button("Rezept im Grimoire versiegeln"):
+            if r_name and (r_ing or r_content):
+                new_recipe = pd.DataFrame([{"Name": r_name, "Zutaten": r_ing, "Inhalt": r_content}])
+                df_recipes = pd.concat([df_recipes, new_recipe], ignore_index=True)
+                save_data(df_recipes, RECIPES_DATEI)
+                st.success(f"Das Rezept '{r_name}' wurde sicher verwahrt.")
+                st.rerun()
+            else:
+                st.warning("Ein Name und eine Anleitung sind für die Beschwörung nötig.")
+
+    if not df_recipes.empty:
+        for r_idx, r_row in df_recipes.iterrows():
+            with st.expander(f"📜 {r_row['Name']}"):
+                # Anzeige der getrennten Bereiche
+                if r_row['Zutaten']:
+                    st.markdown("### 🧪 Benötigte Essenzen")
+                    st.markdown(r_row['Zutaten'].replace("\n", "  \n"))
+                
+                if r_row['Inhalt']:
+                    st.markdown("### 📖 Das Ritual")
+                st.markdown(r_row['Inhalt'].replace("\n", "  \n"))
+                
+                st.divider()
+                
+                # Integrierter Bereich für neue Zutaten PRO REZEPT
+                with st.container():
+                    st.markdown("<small><i>Zutat aus diesem Rezept den Vorräten hinzufügen:</i></small>", unsafe_allow_html=True)
+                    ic1, ic2 = st.columns(2)
+                    with ic1:
+                        z_name = st.text_input("Name", key=f"ing_n_{r_idx}")
+                        z_einheit = st.radio("Einheit", ["Stück", "Gramm"], key=f"ing_u_{r_idx}", horizontal=True)
+                    with ic2:
+                        z_label = "kcal/Stück" if z_einheit == "Stück" else "kcal/100g"
+                        z_kcal = st.number_input(z_label, min_value=0.0, step=0.1, key=f"ing_k_{r_idx}")
+                    
+                    if st.button("In Vorräte schmieden", key=f"btn_add_{r_idx}"):
+                        if z_name:
+                            z_menge = 1.0 if z_einheit == "Stück" else 100.0
+                            neu_fav = pd.DataFrame([{
+                                "Name": z_name, 
+                                "Menge": z_menge, 
+                                "Einheit": z_einheit, 
+                                "Kalorien_pro_Einheit": z_kcal
+                            }])
+                            df_predefined = pd.concat([df_predefined, neu_fav], ignore_index=True)
+                            save_data(df_predefined, PREDEFINED_DATEI)
+                            st.success(f"'{z_name}' hinzugefügt!")
+                            st.rerun()
+
+                if st.button("Dieses Rezept vernichten", key=f"del_recipe_{r_idx}"):
+                    df_recipes = df_recipes.drop(r_idx).reset_index(drop=True)
+                    save_data(df_recipes, RECIPES_DATEI)
+                    st.rerun()
