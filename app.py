@@ -59,7 +59,8 @@ if check_password():
 
     # --- EINSTELLUNGEN & DATEN ---
     TAGESZIEL = 1550
-    DATEI = "kalorien_daten.csv"
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATEI = os.path.join(BASE_DIR, "kalorien_daten.csv")
 
     if not os.path.exists(DATEI):
         df = pd.DataFrame(columns=["Datum", "Lebensmittel", "Kalorien"])
@@ -89,25 +90,34 @@ if check_password():
     st.subheader("🌑 Neues Opfer eintragen")
     neues_essen = st.text_input("Name der Speise")
     
+    einheit = st.radio("Einheit wählen", ["Stück", "Gramm"], horizontal=True)
+
     col1, col2 = st.columns(2)
     with col1:
-        menge = st.number_input("Menge", min_value=1, value=1, step=1)
+        menge_label = "Anzahl" if einheit == "Stück" else "Gewicht (g)"
+        menge = st.number_input(menge_label, min_value=1, value=1 if einheit == "Stück" else 100, step=1)
     with col2:
-        einzel_kcal = st.number_input("Kalorien pro Stück", min_value=0, value=0, step=1)
+        kcal_label = "Kalorien pro Stück" if einheit == "Stück" else "Kalorien pro 100g"
+        einzel_kcal = st.number_input(kcal_label, min_value=0, value=0, step=1)
 
-    total_kcal = menge * einzel_kcal
+    if einheit == "Stück":
+        total_kcal = menge * einzel_kcal
+        eintrag_name = f"{menge}x {neues_essen}"
+    else:
+        total_kcal = (menge / 100) * einzel_kcal
+        eintrag_name = f"{menge}g {neues_essen}"
 
     if st.button("In der Krypta speichern 💾"):
         if neues_essen and total_kcal > 0:
             neue_zeile = pd.DataFrame({
                 "Datum": [heute_str], 
-                "Lebensmittel": [f"{menge}x {neues_essen}"], 
-                "Kalorien": [total_kcal]
+                "Lebensmittel": [eintrag_name], 
+                "Kalorien": [round(total_kcal, 1)]
             })
             df = pd.concat([df, neue_zeile], ignore_index=True)
             df.to_csv(DATEI, index=False)
             st.success("Eintrag sicher verwahrt.")
-            st.rerun()
+            st.rerun() # Seite neu laden, um Metriken zu aktualisieren
 
     # --- LISTE ---
     st.divider()
