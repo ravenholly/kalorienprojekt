@@ -170,7 +170,7 @@ if check_password():
                     c1, c2, c3, c_del = st.columns([1, 1, 1, 1])
                     
                     def add_entry(cat):
-                        kcal_val = (row['Menge'] / 100 * row['Calorien_pro_Einheit']) if row['Einheit'] == "Gramm" else (row['Menge'] * row['Calorien_pro_Einheit'])
+                        kcal_val = (row['Menge'] / 100 * row['Kalorien_pro_Einheit']) if row['Einheit'] == "Gramm" else (row['Menge'] * row['Kalorien_pro_Einheit'])
                         food_lbl = f"{row['Menge']}g {row['Name']}" if row['Einheit'] == "Gramm" else f"{row['Menge']}x {row['Name']}"
                         
                         new_entry = pd.DataFrame({
