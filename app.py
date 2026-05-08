@@ -245,7 +245,7 @@ if check_password():
     col1, col2 = st.columns(2)
     with col1:
         menge_label = "Anzahl" if einheit == "Stück" else "Gewicht (g)"
-        menge = st.number_input(menge_label, min_value=1, value=1 if einheit == "Stück" else 100, step=1)
+        menge = st.number_input(menge_label, min_value=0.5, value=1.0 if einheit == "Stück" else 100.0, step=0.5)
     with col2:
         kcal_label = "Kalorien pro Stück" if einheit == "Stück" else "Kalorien pro 100g"
         einzel_kcal = st.number_input(kcal_label, min_value=0.0, value=float(st.session_state.bc_kcal), step=0.1, format="%.1f")
