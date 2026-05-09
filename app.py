@@ -63,6 +63,7 @@ def get_product_info(barcode):
                 nutriments = product.get("nutriments", {})
                 
                 kcal = 0.0
+                
                 # 1. Versuch: Kalorien (kcal) direkt finden
                 for key in ["energy-kcal_100g", "energy-kcal_serving", "energy-kcal"]:
                     val = nutriments.get(key)
@@ -179,10 +180,11 @@ st.markdown("""
         border: 1px solid #db7093 !important; 
     }
     .stProgress > div > div > div > div { 
-        background-color: #8b0000; 
-        background-image: linear-gradient(90deg, #8b0000, #ff007f, #8b0000);
+        background-color: #ffb6c1; 
+        background-image: linear-gradient(90deg, #ffb6c1, #ffd1dc, #ffb6c1);
         background-size: 200% 100%;
-        animation: shimmer 2s infinite linear;
+        animation: shimmer 4s infinite linear;
+        box-shadow: 0 0 8px rgba(255, 182, 193, 0.5);
     }
     [data-testid="stSidebar"] { 
         background-color: #0a0005; 
@@ -356,7 +358,7 @@ if check_password():
     final_kcal = round(total_kcal, 1)
 
     # Live-Vorschau der berechneten Kalorien
-    st.info(f"⚖️ **Berechnete Opfergabe:** {final_kcal} kcal")
+    st.info(f"⚖️ **Opfergabe:** {final_kcal} kcal")
 
     if st.button("In der Krypta speichern 💾", use_container_width=True):
         if neues_essen:

@@ -1,21 +1,21 @@
-Datum,Lebensmittel,Kalorien,Kategorie
-2026-05-08,50g Joghurt 0.1 % Fett,25.5,Mittagessen
-2026-05-08,60g Hirtenkäse,171.0,Mittagessen
-2026-05-08,60g Eier aus Bodenhaltung,91.8,Mittagessen
-2026-05-08,60g Eier aus Bodenhaltung,91.8,Mittagessen
-2026-05-08,200g Puten-Hackfleisch,320.0,Mittagessen
-2026-05-08,0.5x Mozzarella light,82.5,Mittagessen
-2026-05-08,100g Eisbergsalat,14.0,Abendessen
-2026-05-08,205.0g Sushi Aikou Aldi,369.0,Abendessen
-2026-05-08,50.0g Joghurt 0.1 % Fett,25.5,Abendessen
-2026-05-08,60.0g Hirtenkäse,171.0,Abendessen
-2026-05-09,60.0g Eier aus Bodenhaltung,91.8,Abendessen
-2026-05-09,60.0g Eier aus Bodenhaltung,91.8,Abendessen
-2026-05-09,50.0g Joghurt 0.1 % Fett,25.5,Abendessen
-2026-05-09,300.0g Steinofen Margharita,636.0,Abendessen
-2026-05-09,20.0g Thunfisch in eigenem Saft,20.2,Abendessen
-2026-05-09,50.0g Joghurt 0.1 % Fett,25.5,Mittagessen
-2026-05-09,375.0g Pfannengemüse asiatische Art,202.5,Mittagessen
-2026-05-09,40.0g Nudeln,143.6,Mittagessen
-2026-05-09,20.0g Thunfisch in eigenem Saft,20.2,Mittagessen
-2026-05-09,15.0g Chia-Samen,73.5,Abendessen
+Datum,Lebensmittel,Kalorien,Kategorie,Qualität
+2026-05-08,50g Joghurt 0.1 % Fett,25.5,Mittagessen,
+2026-05-08,60g Hirtenkäse,171.0,Mittagessen,
+2026-05-08,60g Eier aus Bodenhaltung,91.8,Mittagessen,
+2026-05-08,60g Eier aus Bodenhaltung,91.8,Mittagessen,
+2026-05-08,200g Puten-Hackfleisch,320.0,Mittagessen,
+2026-05-08,0.5x Mozzarella light,82.5,Mittagessen,
+2026-05-08,100g Eisbergsalat,14.0,Abendessen,
+2026-05-08,205.0g Sushi Aikou Aldi,369.0,Abendessen,
+2026-05-08,50.0g Joghurt 0.1 % Fett,25.5,Abendessen,
+2026-05-08,60.0g Hirtenkäse,171.0,Abendessen,
+2026-05-09,60.0g Eier aus Bodenhaltung,91.8,Abendessen,
+2026-05-09,60.0g Eier aus Bodenhaltung,91.8,Abendessen,
+2026-05-09,50.0g Joghurt 0.1 % Fett,25.5,Abendessen,
+2026-05-09,300.0g Steinofen Margharita,636.0,Abendessen,
+2026-05-09,20.0g Thunfisch in eigenem Saft,20.2,Abendessen,
+2026-05-09,50.0g Joghurt 0.1 % Fett,25.5,Mittagessen,
+2026-05-09,375.0g Pfannengemüse asiatische Art,202.5,Mittagessen,
+2026-05-09,40.0g Nudeln,143.6,Mittagessen,
+2026-05-09,20.0g Thunfisch in eigenem Saft,20.2,Mittagessen,
+2026-05-09,15.0g Chia-Samen,73.5,Abendessen,

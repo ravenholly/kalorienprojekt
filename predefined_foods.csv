@@ -1,23 +1,23 @@
-Name,Menge,Einheit,Kalorien_pro_Einheit
-Schoko Müsli Weniger Süß,100.0,Gramm,387.0
-Eier aus Bodenhaltung,60.0,Gramm,153.0
-Hirtenkäse,60.0,Gramm,285.0
-Joghurt 0.1 % Fett,50.0,Gramm,51.0
-Puten-Hackfleisch,200.0,Gramm,160.0
-Rispentomaten,1.0,Stück,15.0
-Eisbergsalat,100.0,Gramm,14.0
-Pfannengemüse Italienische Art,375.0,Gramm,62.0
-Pfannengemüse Mexikanische Art,375.0,Gramm,87.0
-Pfannengemüse Rustikale Art,375.0,Gramm,80.0
-Pfannengemüse asiatische Art,375.0,Gramm,54.0
-Mozzarella light,125.0,Gramm,165.0
-Sushi Aikou Aldi,205.0,Gramm,180.0
-Nudeln,40.0,Gramm,359.0
-Langkornreis,40.0,Gramm,355.0
-Frisches Hähnchen-Geschnetzeltes,200.0,Gramm,104.0
-Avocado,150.0,Gramm,160.0
-Zitronen Saft,1.0,Stück,22.0
-Steinofen Margharita,300.0,Gramm,212.0
-Thunfisch in eigenem Saft,150.0,Gramm,101.0
-Thunfisch in eigenem Saft,20.0,Gramm,101.0
-Chia-Samen,15.0,Gramm,490.0
+Name,Menge,Einheit,Kalorien_pro_Einheit,Qualität
+Schoko Müsli Weniger Süß,100.0,Gramm,387.0,
+Eier aus Bodenhaltung,60.0,Gramm,153.0,
+Hirtenkäse,60.0,Gramm,285.0,
+Joghurt 0.1 % Fett,50.0,Gramm,51.0,
+Puten-Hackfleisch,200.0,Gramm,160.0,
+Rispentomaten,1.0,Stück,15.0,
+Eisbergsalat,100.0,Gramm,14.0,
+Pfannengemüse Italienische Art,375.0,Gramm,62.0,
+Pfannengemüse Mexikanische Art,375.0,Gramm,87.0,
+Pfannengemüse Rustikale Art,375.0,Gramm,80.0,
+Pfannengemüse asiatische Art,375.0,Gramm,54.0,
+Mozzarella light,125.0,Gramm,165.0,
+Sushi Aikou Aldi,205.0,Gramm,180.0,
+Nudeln,40.0,Gramm,359.0,
+Langkornreis,40.0,Gramm,355.0,
+Frisches Hähnchen-Geschnetzeltes,200.0,Gramm,104.0,
+Avocado,150.0,Gramm,160.0,
+Zitronen Saft,1.0,Stück,22.0,
+Steinofen Margharita,300.0,Gramm,212.0,
+Thunfisch in eigenem Saft,150.0,Gramm,101.0,
+Thunfisch in eigenem Saft,20.0,Gramm,101.0,
+Chia-Samen,15.0,Gramm,490.0,
