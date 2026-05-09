@@ -222,11 +222,16 @@ if check_password():
     DATEI = os.path.join(BASE_DIR, "kalorien_daten.csv")
     PREDEFINED_DATEI = os.path.join(BASE_DIR, "predefined_foods.csv")
     RECIPES_DATEI = os.path.join(BASE_DIR, "recipes.csv")
+    SCHRITTE_DATEI = os.path.join(BASE_DIR, "schritte_daten.csv")
 
     # Lade Haupt-Kaloriendaten
     df = load_data(DATEI, ["Datum", "Lebensmittel", "Kalorien", "Kategorie"])
     df['Datum'] = df['Datum'].astype(str)
     
+    # Lade Schrittdaten
+    df_steps = load_data(SCHRITTE_DATEI, ["Datum", "Schritte", "Kalorien_Verbrannt"])
+    df_steps["Kalorien_Verbrannt"] = pd.to_numeric(df_steps["Kalorien_Verbrannt"], errors='coerce').fillna(0.0)
+
     # Lade vordefinierte Lebensmittel
     df_predefined = load_data(PREDEFINED_DATEI, ["Name", "Menge", "Einheit", "Kalorien_pro_Einheit"])
 
@@ -302,14 +307,18 @@ if check_password():
     # --- DASHBOARD ---
     df_heute = df[df["Datum"] == heute_str]
     gegessen = df_heute["Kalorien"].sum()
-    uebrig = TAGESZIEL - gegessen
+    
+    df_steps_heute = df_steps[df_steps["Datum"] == heute_str]
+    verbrannt = df_steps_heute["Kalorien_Verbrannt"].sum()
+    uebrig = TAGESZIEL - gegessen + verbrannt
 
-    c1, c2, c3 = st.columns(3)
+    c1, c2, c3, c4 = st.columns(4)
     c1.metric("Limit", f"{TAGESZIEL}")
     c2.metric("Opfer", f"{round(gegessen, 1)}")
-    c3.metric("Rest", f"{round(uebrig, 1)}")
+    c3.metric("Schatten", f"-{round(verbrannt, 1)}")
+    c4.metric("Rest", f"{round(uebrig, 1)}")
 
-    st.progress(min(gegessen / TAGESZIEL, 1.0))
+    st.progress(max(0.0, min((gegessen - verbrannt) / TAGESZIEL, 1.0)))
     st.divider()
 
     # --- EINGABE ---
@@ -386,6 +395,31 @@ if check_password():
             
             st.success("Eintrag sicher verwahrt.")
             st.rerun() # Seite neu laden, um Metriken zu aktualisieren
+
+    # --- SCHRITTE ---
+    with st.expander("👣 Schattenlauf (Schritte hinzufügen)"):
+        schritte_input = st.number_input("Anzahl der Schritte", min_value=0, step=500, value=0)
+        if st.button("Schritte in die Chronik einweben", use_container_width=True):
+            if schritte_input > 0:
+                # Durchschnittlich 0.04 kcal pro Schritt
+                kcal_calc = round(schritte_input * 0.04, 1)
+                neue_schritte = pd.DataFrame({"Datum": [heute_str], "Schritte": [schritte_input], "Kalorien_Verbrannt": [kcal_calc]})
+                df_steps = pd.concat([df_steps, neue_schritte], ignore_index=True)
+                save_data(df_steps, SCHRITTE_DATEI)
+                st.success(f"{schritte_input} Schritte haben {kcal_calc} kcal verbrannt.")
+                st.rerun()
+
+        # Liste der heutigen Schritte zum Löschen
+        if not df_steps_heute.empty:
+            st.divider()
+            st.markdown("##### 👣 Heutige Wanderungen")
+            for index, row in df_steps_heute.iterrows():
+                c_step_info, c_step_del = st.columns([0.85, 0.15])
+                c_step_info.write(f"**{int(row['Schritte'])}** Schritte: -{row['Kalorien_Verbrannt']} kcal")
+                if c_step_del.button("🗑️", key=f"del_step_{index}"):
+                    df_steps = df_steps.drop(index)
+                    save_data(df_steps, SCHRITTE_DATEI)
+                    st.rerun()
 
     # --- LISTE ---
     st.divider()
