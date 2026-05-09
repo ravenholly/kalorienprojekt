@@ -118,24 +118,6 @@ st.markdown("""
         100% { background-position: 200% 0; }
     }
 
-    /* Spezial-Shimmer für den Balken: Nur die Farbe bewegt sich */
-    @keyframes shimmer-bar {
-        0% { background-position: 0 0, 0 0, -200% 0; }
-        100% { background-position: 0 0, 0 0, 200% 0; }
-    }
-
-    /* Magischer Glitzer-Schatten */
-    @keyframes magic-aura {
-        0%, 100% { box-shadow: 0 0 10px #ff007f, 0 0 5px #fff; }
-        50% { box-shadow: 0 0 20px #ff85c0, 0 0 10px #fff; }
-    }
-
-    /* Funkelnde Punkte (Sparkle) durch Größenänderung */
-    @keyframes sparkle {
-        0%, 100% { background-size: 18px 18px, 28px 28px, 200% 100%; opacity: 1; }
-        50% { background-size: 25px 25px, 20px 20px, 200% 100%; opacity: 0.8; }
-    }
-
     /* Haupt-Hintergrund: Zentrum etwas heller für bessere Sichtbarkeit auf Handys */
     .stApp { 
         background: radial-gradient(circle at center, #3a0820 0%, #0a0505 60%, #000000 100%); 
@@ -143,11 +125,11 @@ st.markdown("""
         font-family: 'Almendra', serif; 
     }
 
-    /* Überschriften (GoT Style) */
+    /* Überschriften (Gothic Style) */
     h1, h2, h3, h5 { 
-        font-family: 'Cinzel', serif; 
-        color: #ff85c0; 
-        text-shadow: 2px 2px 10px rgba(255, 133, 192, 0.5); 
+        font-family: 'Cinzel', serif;
+        color: #ff85c0;
+        text-shadow: 2px 2px 10px rgba(255, 133, 192, 0.5);
         text-transform: uppercase;
         text-align: center;
     }
@@ -159,6 +141,10 @@ st.markdown("""
         padding: 15px;
         border-radius: 10px;
         box-shadow: 0 0 15px rgba(219, 112, 147, 0.2); 
+    }
+    [data-testid="stMetricLabel"] {
+        color: #ff85c0 !important;
+        font-family: 'Cinzel', serif !important;
     }
     [data-testid="stMetricValue"] { 
         color: #ffb6c1 !important; 
@@ -180,7 +166,7 @@ st.markdown("""
     .stButton>button:hover { 
         animation: shimmer 3s infinite linear;
         background-image: linear-gradient(90deg, #250a15, #db7093, #ffb6c1, #db7093, #250a15); 
-        color: #ffffff; 
+        color: #ffffff;
         box-shadow: 0 0 20px rgba(219, 112, 147, 0.4); 
         transform: translateY(-2px);
         border-color: #ffb6c1; 
@@ -193,14 +179,10 @@ st.markdown("""
         border: 1px solid #db7093 !important; 
     }
     .stProgress > div > div > div > div { 
-        background: 
-            radial-gradient(circle, rgba(255,255,255,0.7) 1.5px, transparent 2px),
-            radial-gradient(circle, rgba(255,255,255,0.4) 1px, transparent 1.5px),
-            linear-gradient(90deg, #ff007f, #db7093, #ff007f); 
-        background-size: 18px 18px, 28px 28px, 200% 100%;
-        background-position: 0 0, 8px 8px, 0 0;
-        animation: shimmer-bar 4s infinite linear, sparkle 3s infinite ease-in-out, magic-aura 2s infinite ease-in-out;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        background-color: #8b0000; 
+        background-image: linear-gradient(90deg, #8b0000, #ff007f, #8b0000);
+        background-size: 200% 100%;
+        animation: shimmer 2s infinite linear;
     }
     [data-testid="stSidebar"] { 
         background-color: #0a0005; 
@@ -223,6 +205,7 @@ if check_password():
     PREDEFINED_DATEI = os.path.join(BASE_DIR, "predefined_foods.csv")
     RECIPES_DATEI = os.path.join(BASE_DIR, "recipes.csv")
     SCHRITTE_DATEI = os.path.join(BASE_DIR, "schritte_daten.csv")
+    SHOPPING_DATEI = os.path.join(BASE_DIR, "einkaufsliste.csv")
 
     # Lade Haupt-Kaloriendaten
     df = load_data(DATEI, ["Datum", "Lebensmittel", "Kalorien", "Kategorie"])
@@ -239,6 +222,9 @@ if check_password():
     df_recipes = load_data(RECIPES_DATEI, ["Name", "Zutaten", "Inhalt", "Kcal_Gesamt", "Kcal_Pro_Person"])
     df_recipes["Kcal_Gesamt"] = pd.to_numeric(df_recipes["Kcal_Gesamt"], errors='coerce').fillna(0.0)
     df_recipes["Kcal_Pro_Person"] = pd.to_numeric(df_recipes["Kcal_Pro_Person"], errors='coerce').fillna(0.0)
+
+    # Lade Einkaufsliste
+    df_shopping = load_data(SHOPPING_DATEI, ["Item", "Kategorie"])
 
     # Session State für Barcode-Suche initialisieren
     if "bc_name" not in st.session_state: st.session_state.bc_name = ""
@@ -319,6 +305,7 @@ if check_password():
     c4.metric("Rest", f"{round(uebrig, 1)}")
 
     st.progress(max(0.0, min((gegessen - verbrannt) / TAGESZIEL, 1.0)))
+
     st.divider()
 
     # --- EINGABE ---
@@ -519,3 +506,58 @@ if check_password():
                         df_recipes = df_recipes.drop(r_idx).reset_index(drop=True)
                         save_data(df_recipes, RECIPES_DATEI)
                         st.rerun()
+
+    # --- SMART SHOPPING LIST (MARKTPLATZ DER ESSENZEN) ---
+    st.divider()
+    st.subheader("🛒 Marktplatz der Essenzen")
+    
+    shopping_cats = ["🍏 Obst & Gemüse", "🧀 Kühlung & Molkerei", "🥩 Fleisch & Fisch", "🍞 Brot & Backwaren", "🥫 Vorratsschrank", "🥤 Getränke", "🧼 Haushalt & Sonstiges"]
+    
+    with st.expander("➕ Neues Item beschwören"):
+        c_shop1, c_shop2 = st.columns([0.6, 0.4])
+        new_item = c_shop1.text_input("Was wird benötigt?")
+        item_cat = c_shop2.selectbox("Gang/Kategorie", shopping_cats)
+        if st.button("Auf die Liste setzen", use_container_width=True):
+            if new_item:
+                new_shop_entry = pd.DataFrame([{"Item": new_item, "Kategorie": item_cat}])
+                df_shopping = pd.concat([df_shopping, new_shop_entry], ignore_index=True)
+                save_data(df_shopping, SHOPPING_DATEI)
+                st.rerun()
+
+    if not df_shopping.empty:
+        # Sortieren nach Kategorien für den optimierten Laufweg
+        for cat in shopping_cats:
+            cat_items = df_shopping[df_shopping["Kategorie"] == cat]
+            if not cat_items.empty:
+                st.markdown(f"**{cat}**")
+                for s_idx, s_row in cat_items.iterrows():
+                    cs1, cs2 = st.columns([0.85, 0.15])
+                    cs1.write(f"• {s_row['Item']}")
+                    if cs2.button("✔️", key=f"done_shop_{s_idx}"):
+                        df_shopping = df_shopping.drop(s_idx).reset_index(drop=True)
+                        save_data(df_shopping, SHOPPING_DATEI)
+                        st.rerun()
+        
+        if st.button("📜 Gesamte Liste verbrennen (Leeren)", use_container_width=True):
+            df_shopping = pd.DataFrame(columns=["Item", "Kategorie"])
+            save_data(df_shopping, SHOPPING_DATEI)
+            st.rerun()
+    else:
+        st.info("Die Einkaufsliste ist leer. Plane deine Mahlzeiten im Grimoire!")
+
+    # --- INTEGRATION: REZEPT ZU EINKAUFSLISTE ---
+    # (Zusatz zu bestehendem Rezept-Loop)
+    # Wir fügen den Button in den Rezept-Anzeigemodus ein
+    # Suche nach der Stelle im Code, wo das Ritual angezeigt wird, und füge dies hinzu:
+    # [Dieser Teil dient als Logik-Ergänzung für den Grimoire-Loop oben]
+    # if st.button("🛒 Zutaten auf Einkaufsliste", key=f"shop_recipe_{r_idx}"):
+    #     if r_row['Zutaten']:
+    #         items_to_add = r_row['Zutaten'].split('\n')
+    #         new_entries = []
+    #         for it in items_to_add:
+    #             if it.strip():
+    #                 new_entries.append({"Item": it.strip(), "Kategorie": "🥫 Vorratsschrank"}) # Standard-Kategorie
+    #         df_shopping = pd.concat([df_shopping, pd.DataFrame(new_entries)], ignore_index=True)
+    #         save_data(df_shopping, SHOPPING_DATEI)
+    #         st.success("Zutaten wurden dem Marktplatz hinzugefügt!")
+    #         st.rerun()
